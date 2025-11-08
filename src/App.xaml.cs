@@ -294,6 +294,9 @@ namespace rds
                     return;
                 }
 
+                var extensions = _configuration!.GetSection("FileExtensions").Get<string[]>() ?? new[] { "mp3", "m3u" };
+                var extensionList = string.Join(", ", extensions.Select(ext => ext.ToUpperInvariant()));
+
                 var progressWindow = new System.Windows.Window
                 {
                     Title = "Syncing...",
@@ -306,7 +309,7 @@ namespace rds
 
                 var progressText = new System.Windows.Controls.TextBlock
                 {
-                    Text = "Scanning folders for MP3 and M3U files...",
+                    Text = $"Scanning folders for {extensionList} files...",
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Thickness(20)
@@ -331,36 +334,24 @@ namespace rds
 
                         try
                         {
-                            var mp3Files = Directory.GetFiles(
-                                folder.Path,
-                                "*.mp3",
-                                SearchOption.AllDirectories);
-
-                            var m3uFiles = Directory.GetFiles(
-                                folder.Path,
-                                "*.m3u",
-                                SearchOption.AllDirectories);
-
-                            foreach (var filePath in mp3Files)
+                            foreach (var extension in extensions)
                             {
-                                var fileInfo = new FileInfo(filePath);
-                                foundFiles.Add(new MediaFile
-                                {
-                                    Path = filePath,
-                                    FileName = fileInfo.Name,
-                                    Extension = fileInfo.Extension.ToLowerInvariant()
-                                });
-                            }
+                                var searchPattern = $"*.{extension.TrimStart('.')}";
+                                var files = Directory.GetFiles(
+                                    folder.Path,
+                                    searchPattern,
+                                    SearchOption.AllDirectories);
 
-                            foreach (var filePath in m3uFiles)
-                            {
-                                var fileInfo = new FileInfo(filePath);
-                                foundFiles.Add(new MediaFile
+                                foreach (var filePath in files)
                                 {
-                                    Path = filePath,
-                                    FileName = fileInfo.Name,
-                                    Extension = fileInfo.Extension.ToLowerInvariant()
-                                });
+                                    var fileInfo = new FileInfo(filePath);
+                                    foundFiles.Add(new MediaFile
+                                    {
+                                        Path = filePath,
+                                        FileName = fileInfo.Name,
+                                        Extension = fileInfo.Extension.ToLowerInvariant()
+                                    });
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -396,7 +387,7 @@ namespace rds
                 progressWindow.Close();
 
                 System.Windows.MessageBox.Show(
-                    $"Sync completed. Found {totalFiles} MP3 and M3U files.",
+                    $"Sync completed. Found {totalFiles} {extensionList} file{(totalFiles == 1 ? "" : "s")}.",
                     "Sync Complete",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
