@@ -1,5 +1,8 @@
+using System;
+using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
 using WinFormsDialogResult = System.Windows.Forms.DialogResult;
 using rds.Data;
@@ -21,6 +24,7 @@ namespace rds
         private void LoadFolders()
         {
             var folders = _dbContext.Folders.OrderBy(f => f.Path).ToList();
+            FoldersDataGrid.ItemsSource = null;
             FoldersDataGrid.ItemsSource = folders;
         }
 
@@ -29,6 +33,49 @@ namespace rds
             var hasSelection = FoldersDataGrid.SelectedItem != null;
             EditButton.IsEnabled = hasSelection;
             DeleteButton.IsEnabled = hasSelection;
+        }
+
+        private void DisplayNameModeComboBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox comboBox)
+            {
+                comboBox.ItemsSource = Enum.GetValues(typeof(DisplayNameMode));
+            }
+        }
+
+        private void FoldersDataGrid_CellEditEnding(object sender, System.Windows.Controls.DataGridCellEditEndingEventArgs e)
+        {
+            if (e.Row.Item is Folder folder)
+            {
+                if (e.EditingElement is System.Windows.Controls.ComboBox comboBox)
+                {
+                    if (comboBox.SelectedItem is DisplayNameMode mode)
+                    {
+                        folder.DisplayNameMode = mode;
+                        if (mode == DisplayNameMode.Blank || mode == DisplayNameMode.Original)
+                        {
+                            folder.DisplayName = null;
+                        }
+                    }
+                }
+                else if (e.EditingElement is System.Windows.Controls.TextBox textBox)
+                {
+                    if (e.Column.Header.ToString() == "Display Name")
+                    {
+                        if (folder.DisplayNameMode == DisplayNameMode.Custom)
+                        {
+                            folder.DisplayName = string.IsNullOrWhiteSpace(textBox.Text) ? null : textBox.Text;
+                        }
+                        else
+                        {
+                            folder.DisplayName = null;
+                        }
+                    }
+                }
+
+                _dbContext.SaveChanges();
+                LoadFolders();
+            }
         }
 
         private void AddButton_Click(object sender, RoutedEventArgs e)
@@ -47,7 +94,12 @@ namespace rds
                     return;
                 }
 
-                var folder = new Folder { Path = folderPath };
+                var folder = new Folder 
+                { 
+                    Path = folderPath,
+                    DisplayNameMode = DisplayNameMode.Original,
+                    DisplayName = null
+                };
                 _dbContext.Folders.Add(folder);
                 _dbContext.SaveChanges();
                 LoadFolders();

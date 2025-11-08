@@ -3,6 +3,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace rds.Models
 {
+    public enum DisplayNameMode
+    {
+        Original,
+        Custom,
+        Blank
+    }
+
     public class Folder
     {
         [Key]
@@ -11,6 +18,11 @@ namespace rds.Models
         [Required]
         [MaxLength(500)]
         public string Path { get; set; } = string.Empty;
+        
+        [MaxLength(200)]
+        public string? DisplayName { get; set; }
+        
+        public DisplayNameMode DisplayNameMode { get; set; } = DisplayNameMode.Original;
         
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }

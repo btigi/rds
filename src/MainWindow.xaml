@@ -38,7 +38,7 @@
                   MouseDoubleClick="ResultsListView_MouseDoubleClick">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Path" Width="600" DisplayMemberBinding="{Binding Path}"/>
+                    <GridViewColumn Header="Path" Width="600" DisplayMemberBinding="{Binding DisplayPath}"/>
                     <GridViewColumn Header="File Name" Width="150" DisplayMemberBinding="{Binding FileName}"/>
                 </GridView>
             </ListView.View>

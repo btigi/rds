@@ -18,9 +18,35 @@
                   CanUserAddRows="False"
                   SelectionMode="Single"
                   SelectionChanged="FoldersDataGrid_SelectionChanged"
+                  CellEditEnding="FoldersDataGrid_CellEditEnding"
                   Margin="0,0,0,10">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*" IsReadOnly="True"/>
+                <DataGridTemplateColumn Header="Display Name Mode" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DisplayNameMode}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox SelectedItem="{Binding DisplayNameMode, UpdateSourceTrigger=PropertyChanged}" 
+                                      Loaded="DisplayNameModeComboBox_Loaded"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Display Name" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DisplayName}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=LostFocus}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
 

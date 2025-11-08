@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -11,6 +12,13 @@ using rds.Models;
 
 namespace rds
 {
+    public class MediaFileDisplayItem
+    {
+        public MediaFile MediaFile { get; set; } = null!;
+        public string DisplayPath { get; set; } = string.Empty;
+        public string FileName => MediaFile.FileName;
+    }
+
     public partial class MainWindow : Window
     {
         [DllImport("user32.dll")]
@@ -127,11 +135,17 @@ namespace rds
                 return;
             }
 
+            var folders = _dbContext.Folders.ToList();
             var results = _dbContext.MediaFiles
                 .ToList()
                 .Where(mf => mf.Path.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 || 
                             mf.FileName.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0)
                 .OrderBy(mf => mf.Path)
+                .Select(mf => new MediaFileDisplayItem
+                {
+                    MediaFile = mf,
+                    DisplayPath = TransformPath(mf.Path, folders)
+                })
                 .ToList();
 
             ResultsListView.ItemsSource = results;
@@ -147,6 +161,51 @@ namespace rds
             {
                 SearchTextBox.Focus();
             }
+        }
+
+        private string TransformPath(string filePath, System.Collections.Generic.List<Folder> folders)
+        {
+            foreach (var folder in folders.OrderByDescending(f => f.Path.Length))
+            {
+                if (filePath.StartsWith(folder.Path, StringComparison.OrdinalIgnoreCase))
+                {
+                    var relativePath = filePath.Substring(folder.Path.Length);
+                    if (relativePath.StartsWith("\\") || relativePath.StartsWith("/"))
+                    {
+                        relativePath = relativePath.Substring(1);
+                    }
+
+                    var directoryName = Path.GetDirectoryName(relativePath);
+                    if (string.IsNullOrWhiteSpace(directoryName))
+                    {
+                        return GetDisplayName(folder);
+                    }
+
+                    var displayName = GetDisplayName(folder);
+                    if (string.IsNullOrWhiteSpace(displayName))
+                    {
+                        return directoryName;
+                    }
+
+                    return Path.Combine(displayName, directoryName);
+                }
+            }
+
+            var fallbackDir = Path.GetDirectoryName(filePath);
+            return string.IsNullOrWhiteSpace(fallbackDir) ? filePath : fallbackDir;
+        }
+
+        private string GetDisplayName(Folder folder)
+        {
+            return folder.DisplayNameMode switch
+            {
+                DisplayNameMode.Original => Path.GetFileName(folder.Path.TrimEnd('\\', '/')),
+                DisplayNameMode.Custom => string.IsNullOrWhiteSpace(folder.DisplayName) 
+                    ? Path.GetFileName(folder.Path.TrimEnd('\\', '/')) 
+                    : folder.DisplayName,
+                DisplayNameMode.Blank => string.Empty,
+                _ => Path.GetFileName(folder.Path.TrimEnd('\\', '/'))
+            };
         }
 
         private void UpdateStatusBar(int resultCount, string searchText)
@@ -170,17 +229,17 @@ namespace rds
                 return;
             }
             
-            if (e.Key == Key.Enter && ResultsListView.SelectedItem is MediaFile selectedFile)
+            if (e.Key == Key.Enter && ResultsListView.SelectedItem is MediaFileDisplayItem selectedItem)
             {
-                OpenFile(selectedFile);
+                OpenFile(selectedItem.MediaFile);
             }
         }
 
         private void ResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (ResultsListView.SelectedItem is MediaFile selectedFile)
+            if (ResultsListView.SelectedItem is MediaFileDisplayItem selectedItem)
             {
-                OpenFile(selectedFile);
+                OpenFile(selectedItem.MediaFile);
             }
         }
 
