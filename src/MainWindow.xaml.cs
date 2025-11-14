@@ -87,6 +87,13 @@ namespace rds
 
         private void MainWindow_StateChanged(object sender, EventArgs e)
         {
+            if (WindowState == WindowState.Minimized)
+            {
+                WindowState = WindowState.Normal;
+                Hide();
+                return;
+            }
+            
             if (!_isInitializing && Visibility == Visibility.Visible)
             {
                 WindowSettingsHelper.SaveWindowPosition(this, _configuration);
