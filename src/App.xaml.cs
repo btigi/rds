@@ -38,9 +38,10 @@ namespace rds
             
             EnsureMediaFilesTableExists();
 
+            var iconStream = GetResourceStream(new Uri("pack://application:,,,/icon.ico"))?.Stream;
             _notifyIcon = new TaskbarIcon
             {
-                Icon = System.Drawing.SystemIcons.Application,
+                Icon = iconStream != null ? new System.Drawing.Icon(iconStream) : System.Drawing.SystemIcons.Application,
                 ToolTipText = "RDS",
                 Visibility = Visibility.Visible
             };

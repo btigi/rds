@@ -35,3 +35,5 @@ $ dotnet build
 ## Licencing
 
 RDS is licenced under the MIT License. Full licence details are available in licence.md
+
+RDS uses the 'find magnifying glass' icon by [Dawood icons](https://icon-icons.com/authors/325-dawood-icons) licenced under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
