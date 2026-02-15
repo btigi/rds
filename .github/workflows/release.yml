@@ -1,0 +1,45 @@
+name: Build and Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore src/rds.csproj
+
+    - name: Build Framework-Dependent
+      run: dotnet publish src/rds.csproj -c Release -r win-x64 --self-contained false -o ./publish/framework-dependent
+
+    - name: Build Self-Contained
+      run: dotnet publish src/rds.csproj -c Release -r win-x64 --self-contained true -o ./publish/self-contained
+
+    - name: Create Framework-Dependent ZIP
+      shell: pwsh
+      run: |
+        Compress-Archive -Path ./publish/framework-dependent/* -DestinationPath ./rds-framework-dependent-win-x64.zip -Force
+
+    - name: Create Self-Contained ZIP
+      shell: pwsh
+      run: |
+        Compress-Archive -Path ./publish/self-contained/* -DestinationPath ./rds-self-contained-win-x64.zip -Force
+
+    - name: Upload Release Assets
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release upload ${{ github.event.release.tag_name }} ./rds-framework-dependent-win-x64.zip ./rds-self-contained-win-x64.zip --clobber
